@@ -145,7 +145,7 @@ def main():
     """Main application entry point."""
 
     st.title("Anomaly Detector")
-    st.caption("Automated detection of abnormal manufacturing test results")
+    st.caption("Automated detection of abnormal test results")
     st.divider()
 
     # File upload section
