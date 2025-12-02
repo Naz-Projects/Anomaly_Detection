@@ -191,25 +191,28 @@ def main():
 
         st.divider()
 
-        # Product selection - vertical but compact
-        st.markdown("**Select Product**")
+        # Product selection - vertical but compact with multi-select
+        st.markdown("**Select Products**")
         col1, col2 = st.columns([2, 3])
         with col1:
             item_numbers = DataLoader.get_item_numbers(df)
-            selected_item = st.selectbox(
-                "Choose ITEM_NUMBER",
+
+            # Multi-select with all products selected by default
+            selected_items = st.multiselect(
+                "Choose ITEM_NUMBER(s)",
                 options=item_numbers,
-                help="Select the product/material to analyze",
+                default=item_numbers,  # All products selected by default
+                help="Select one or more products to analyze",
                 label_visibility="collapsed"
             )
 
-        if selected_item:
-            st.session_state.selected_item = selected_item
+        if selected_items:
+            st.session_state.selected_item = selected_items
 
-            # Show test count for selected item
-            test_count = DataLoader.get_test_count(df, selected_item)
+            # Show test count for selected items
+            total_tests = sum([DataLoader.get_test_count(df, item) for item in selected_items])
             with col2:
-                st.markdown(f"<br>**{test_count}** test sessions available", unsafe_allow_html=True)
+                st.markdown(f"<br>**{len(selected_items)}** product(s), **{total_tests}** test sessions", unsafe_allow_html=True)
 
             st.divider()
 
@@ -217,11 +220,15 @@ def main():
             st.subheader("Detection Criteria")
             st.caption("Add filters to detect anomalies. Values outside the ranges will be flagged.")
 
-            # Get analyzable result names
-            result_names = DataLoader.get_analyzable_result_names(df, selected_item)
+            # Get analyzable result names across all selected products
+            result_names = []
+            for item in selected_items:
+                item_results = DataLoader.get_analyzable_result_names(df, item)
+                result_names.extend(item_results)
+            result_names = sorted(list(set(result_names)))  # Remove duplicates and sort
 
             if not result_names:
-                st.warning(":warning: No analyzable test types found for this product")
+                st.warning(":warning: No analyzable test types found for selected products")
                 return
 
             st.caption(f"{len(result_names)} test types available for analysis")
@@ -240,10 +247,20 @@ def main():
                         )
                         st.session_state.filters[i]['result_name'] = selected_result
 
-                        # Show current data range
-                        min_val, max_val = DataLoader.get_value_range(df, selected_item, selected_result)
-                        if min_val is not None and max_val is not None:
-                            st.caption(f"Range: {min_val:.3f} to {max_val:.3f}")
+                        # Show current data range across all selected products
+                        all_min_vals = []
+                        all_max_vals = []
+                        for item in selected_items:
+                            min_val, max_val = DataLoader.get_value_range(df, item, selected_result)
+                            if min_val is not None:
+                                all_min_vals.append(min_val)
+                            if max_val is not None:
+                                all_max_vals.append(max_val)
+
+                        if all_min_vals and all_max_vals:
+                            overall_min = min(all_min_vals)
+                            overall_max = max(all_max_vals)
+                            st.caption(f"Range: {overall_min:.3f} to {overall_max:.3f}")
 
                     with col2:
                         lower = st.number_input(
@@ -286,16 +303,22 @@ def main():
                             if f['result_name'] is not None
                         }
 
-                        # Run anomaly detection
+                        # Run anomaly detection for all selected products
                         with st.spinner("Analyzing data..."):
-                            result_df = AnomalyDetector.detect_anomalies(
-                                st.session_state.df,
-                                selected_item,
-                                criteria
-                            )
-                            st.session_state.analysis_results = result_df
+                            all_results = []
+                            for item in selected_items:
+                                result_df = AnomalyDetector.detect_anomalies(
+                                    st.session_state.df,
+                                    item,
+                                    criteria
+                                )
+                                all_results.append(result_df)
 
-                        st.success(f"Analysis complete! Processed {len(st.session_state.filters)} filters")
+                            # Combine all results
+                            combined_results = pd.concat(all_results, ignore_index=True)
+                            st.session_state.analysis_results = combined_results
+
+                        st.success(f"Analysis complete! Processed {len(selected_items)} product(s) with {len(st.session_state.filters)} filter(s)")
                         st.rerun()
                     else:
                         st.warning("Please add at least one filter to run the analysis")
