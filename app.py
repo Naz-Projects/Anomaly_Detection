@@ -1,6 +1,6 @@
 """
 Anomaly Detector - Manufacturing Test Results Analysis
-A Streamlit application for detecting anomalies in manufacturing test data.
+A Streamlit application for detecting anomalies in test data.
 """
 
 import streamlit as st
