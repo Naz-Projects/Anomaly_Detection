@@ -163,7 +163,7 @@ If you encounter any issues or have questions about using the tool, please conta
 ## Technical Information (For IT/Developers)
 
 **Deployment:** Streamlit Community Cloud
-**Repository:** [GitHub Repository Link]
+**Repository:** https://github.com/gorefabrics/Anomaly_Detector
 **Requirements:** Python 3.11+, Streamlit, pandas, openpyxl, plotly
 
 For technical documentation or to modify the tool, see the repository README or contact the development team.
