@@ -39,15 +39,24 @@ Filters tell the tool what's considered "normal" vs "abnormal" for each test mea
 1. Click the **"➕ Add Filter"** button
 2. For each filter:
    - **Select Test Type**: Choose which measurement to monitor (e.g., "Dim Stab Warp")
-   - **Set Lower Bound**: Enter the minimum acceptable value
-   - **Set Upper Bound**: Enter the maximum acceptable value
-   - The tool shows the current data range to help you decide
+   - **Automatic Bounds**: The tool automatically calculates statistical bounds using quartiles
+     - Lower Bound = Q1 (25th percentile)
+     - Upper Bound = Q3 (75th percentile)
+   - **Adjust if needed**: You can manually change these values to be more or less strict
+   - The tool shows the current data range for reference
+
+**What are Quartiles?**
+- Quartiles divide your data into four equal parts
+- Q1 (25th percentile) = 25% of your data falls below this value
+- Q3 (75th percentile) = 75% of your data falls below this value
+- Values below Q1 or above Q3 represent the outer 50% of your data distribution
+- The bounds are calculated from your actual data, so they're tailored to your measurements
 
 **Example Filter:**
 - Test Type: Dim Stab Warp
-- Lower Bound: -4.75
-- Upper Bound: -2.75
-- Result: Any value below -4.75 or above -2.75 will be flagged as ABNORMAL
+- Auto-calculated bounds: Lower = -4.5 (Q1), Upper = -3.0 (Q3)
+- You can adjust: Lower = -4.75, Upper = -2.75 (if you want different limits)
+- Result: Any value outside your bounds will be flagged as ABNORMAL
 
 3. Add as many filters as needed for different test types
 4. To remove a filter, click the **✕** button next to it

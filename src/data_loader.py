@@ -151,3 +151,51 @@ class DataLoader:
             'total_items': df['ITEM_NUMBER'].nunique(),
             'total_tests': df['TEST_NUMBER'].nunique()
         }
+
+    @staticmethod
+    def calculate_iqr_bounds(df: pd.DataFrame, item_numbers: list, result_name: str) -> tuple:
+        """
+        Calculate quartile-based bounds for anomaly detection.
+
+        Uses Q1 and Q3 as bounds:
+        - Lower Bound = Q1 (25th percentile)
+        - Upper Bound = Q3 (75th percentile)
+
+        This flags values in the lower 25% and upper 25% as potential anomalies.
+
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            The input dataframe
+        item_numbers : list
+            List of ITEM_NUMBERs to include in calculation
+        result_name : str
+            The RESULT_NAME to calculate bounds for
+
+        Returns:
+        --------
+        Tuple[float, float]
+            (lower_bound, upper_bound) or (None, None) if insufficient data
+        """
+        # Filter data to selected items and result name
+        filtered_df = df[
+            (df['ITEM_NUMBER'].isin(item_numbers)) &
+            (df['RESULT_NAME'] == result_name)
+        ]
+
+        try:
+            # Convert to numeric, coerce errors to NaN
+            numeric_values = pd.to_numeric(filtered_df['RESPONSE'], errors='coerce')
+            numeric_values = numeric_values.dropna()
+
+            if len(numeric_values) < 4:  # Need at least 4 points for meaningful quartiles
+                return None, None
+
+            # Calculate quartiles - use Q1 and Q3 as bounds
+            Q1 = numeric_values.quantile(0.25)
+            Q3 = numeric_values.quantile(0.75)
+
+            return float(Q1), float(Q3)
+
+        except Exception:
+            return None, None
